@@ -1,14 +1,19 @@
 package com.ammonium.souloverclockers;
 
+import com.ammonium.souloverclockers.block.OverclockerBlock;
+import com.ammonium.souloverclockers.block.entity.OverclockerEntity;
+import com.ammonium.souloverclockers.item.LoreBlockItem;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
-import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.material.Material;
+import net.minecraft.world.level.material.MaterialColor;
+import net.minecraft.world.level.material.PushReaction;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -21,26 +26,48 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.DeferredRegister;
 import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
+
+import java.util.function.Supplier;
 
 // The value here should match an entry in the META-INF/mods.toml file
 @Mod(SoulOverclockers.MODID)
-public class SoulOverclockers
-{
+public class SoulOverclockers {
     // Define mod id in a common place for everything to reference
     public static final String MODID = "souloverclockers";
     // Directly reference a slf4j logger
     private static final Logger LOGGER = LogUtils.getLogger();
-    // Create a Deferred Register to hold Blocks which will all be registered under the "souloverclockers" namespace
-    public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, MODID);
-    // Create a Deferred Register to hold Items which will all be registered under the "souloverclockers" namespace
+    // Items deferred register
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MODID);
+    // Blocks deferred register
+    public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, MODID);
+    // BlockEntities deferred register
+    public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, MODID);
+    public static final CreativeModeTab CREATIVE_TAB = new CreativeModeTab("Soul Overclockers") {
+        @Override
+        public @NotNull ItemStack makeIcon() {
+            return new ItemStack(OVERCLOCKER_BLOCK.get());
+        }
+    };
+    public static final Material machineBlock = new Material(MaterialColor.METAL, false, true, true, true, false, false, PushReaction.BLOCK);
+    private static <T extends Block> RegistryObject<T> registerLoreBlock(String name, Supplier<T> block, String lore) {
+        RegistryObject<T> toReturn = BLOCKS.register(name, block);
+        registerLoreBlockItem(name, toReturn, SoulOverclockers.CREATIVE_TAB, lore);
+        return toReturn;
+    }
+    private static <T extends Block> RegistryObject<Item> registerLoreBlockItem(String name, RegistryObject<T> block,
+                                                                                CreativeModeTab tab, String lore) {
+        return ITEMS.register(name, () -> new LoreBlockItem(block.get(),
+                new Item.Properties().tab(tab), lore));
+    }
 
-    // Creates a new Block with the id "souloverclockers:example_block", combining the namespace and path
-    public static final RegistryObject<Block> EXAMPLE_BLOCK = BLOCKS.register("example_block", () -> new Block(BlockBehaviour.Properties.of(Material.STONE)));
-    // Creates a new BlockItem with the id "souloverclockers:example_block", combining the namespace and path
-    public static final RegistryObject<Item> EXAMPLE_BLOCK_ITEM = ITEMS.register("example_block", () -> new BlockItem(EXAMPLE_BLOCK.get(), new Item.Properties().tab(CreativeModeTab.TAB_BUILDING_BLOCKS)));
-
+    // Create soul overclocker block entity
+    public static final RegistryObject<Block> OVERCLOCKER_BLOCK = registerLoreBlock("overclocker",
+            OverclockerBlock::new, "Accelerates machines placed directly above it");
+    public static final RegistryObject<BlockEntityType<OverclockerEntity>> OVERCLOCKER_ENTITY =
+            BLOCK_ENTITIES.register("overclocker", () -> BlockEntityType.Builder.of(OverclockerEntity::new,
+                    OVERCLOCKER_BLOCK.get()).build(null));
     public SoulOverclockers()
     {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
