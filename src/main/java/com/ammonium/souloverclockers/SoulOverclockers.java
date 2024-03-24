@@ -37,14 +37,14 @@ public class SoulOverclockers {
     // Define mod id in a common place for everything to reference
     public static final String MODID = "souloverclockers";
     // Directly reference a slf4j logger
-    private static final Logger LOGGER = LogUtils.getLogger();
+    public static final Logger LOGGER = LogUtils.getLogger();
     // Items deferred register
     public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MODID);
     // Blocks deferred register
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, MODID);
     // BlockEntities deferred register
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, MODID);
-    public static final CreativeModeTab CREATIVE_TAB = new CreativeModeTab("Soul Overclockers") {
+    public static final CreativeModeTab CREATIVE_TAB = new CreativeModeTab("souloverclockers") {
         @Override
         public @NotNull ItemStack makeIcon() {
             return new ItemStack(OVERCLOCKER_BLOCK.get());
@@ -64,7 +64,7 @@ public class SoulOverclockers {
 
     // Create soul overclocker block entity
     public static final RegistryObject<Block> OVERCLOCKER_BLOCK = registerLoreBlock("overclocker",
-            OverclockerBlock::new, "Accelerates machines placed directly above it");
+            OverclockerBlock::new, "Accelerates machines placed directly above it! Requires");
     public static final RegistryObject<BlockEntityType<OverclockerEntity>> OVERCLOCKER_ENTITY =
             BLOCK_ENTITIES.register("overclocker", () -> BlockEntityType.Builder.of(OverclockerEntity::new,
                     OVERCLOCKER_BLOCK.get()).build(null));
@@ -75,6 +75,8 @@ public class SoulOverclockers {
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
 
+        // Register block entities
+        BLOCK_ENTITIES.register(modEventBus);
         // Register the Deferred Register to the mod event bus so blocks get registered
         BLOCKS.register(modEventBus);
         // Register the Deferred Register to the mod event bus so items get registered

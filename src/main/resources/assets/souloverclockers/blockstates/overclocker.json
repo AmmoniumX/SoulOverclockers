@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "lit=false": {
+      "model": "souloverclockers:block/overclocker"
+    },
+    "lit=true": {
+      "model": "souloverclockers:block/overclocker_on"
+    }
+  }
+}

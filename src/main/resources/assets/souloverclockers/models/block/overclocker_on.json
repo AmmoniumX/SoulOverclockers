@@ -1,0 +1,7 @@
+{
+  "parent": "minecraft:block/cube_column",
+  "textures": {
+    "end": "souloverclockers:block/machine_side",
+    "side": "souloverclockers:block/overclocker_side_on"
+  }
+}
