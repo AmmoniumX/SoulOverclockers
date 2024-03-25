@@ -1,8 +1,5 @@
 package com.ammonium.souloverclockers.soulpower;
 
-import com.ammonium.souloverclockers.SoulOverclockers;
-import com.ammonium.souloverclockers.setup.Config;
-
 public class ClientCapabilityData {
     private static int used;
     private static int cap;
