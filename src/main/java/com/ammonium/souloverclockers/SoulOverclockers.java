@@ -2,7 +2,9 @@ package com.ammonium.souloverclockers;
 
 import com.ammonium.souloverclockers.block.OverclockerBlock;
 import com.ammonium.souloverclockers.block.entity.OverclockerEntity;
+import com.ammonium.souloverclockers.item.Attuner;
 import com.ammonium.souloverclockers.item.LoreBlockItem;
+import com.ammonium.souloverclockers.item.LoreItem;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.item.CreativeModeTab;
@@ -62,9 +64,11 @@ public class SoulOverclockers {
                 new Item.Properties().tab(tab), lore));
     }
 
-    // Create soul overclocker block entity
+    // Register objects
+
+    public static final RegistryObject<Item> ATTUNER = ITEMS.register("attuner", Attuner::new);
     public static final RegistryObject<Block> OVERCLOCKER_BLOCK = registerLoreBlock("overclocker",
-            OverclockerBlock::new, "Accelerates machines placed directly above it! Requires");
+            OverclockerBlock::new, "Accelerates machines placed directly above it! Requires Soul Power");
     public static final RegistryObject<BlockEntityType<OverclockerEntity>> OVERCLOCKER_ENTITY =
             BLOCK_ENTITIES.register("overclocker", () -> BlockEntityType.Builder.of(OverclockerEntity::new,
                     OVERCLOCKER_BLOCK.get()).build(null));
@@ -89,8 +93,7 @@ public class SoulOverclockers {
     private void commonSetup(final FMLCommonSetupEvent event)
     {
         // Some common setup code
-        LOGGER.info("HELLO FROM COMMON SETUP");
-        LOGGER.info("DIRT BLOCK >> {}", ForgeRegistries.BLOCKS.getKey(Blocks.DIRT));
+//        LOGGER.info("HELLO FROM COMMON SETUP");
     }
 
     // You can use SubscribeEvent and let the Event Bus discover methods to call
@@ -98,7 +101,7 @@ public class SoulOverclockers {
     public void onServerStarting(ServerStartingEvent event)
     {
         // Do something when the server starts
-        LOGGER.info("HELLO from server starting");
+//        LOGGER.info("HELLO from server starting");
     }
 
     // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
@@ -109,8 +112,7 @@ public class SoulOverclockers {
         public static void onClientSetup(FMLClientSetupEvent event)
         {
             // Some client setup code
-            LOGGER.info("HELLO FROM CLIENT SETUP");
-            LOGGER.info("MINECRAFT NAME >> {}", Minecraft.getInstance().getUser().getName());
+//            LOGGER.info("HELLO FROM CLIENT SETUP");
         }
     }
 }

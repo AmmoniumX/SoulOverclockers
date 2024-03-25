@@ -30,66 +30,59 @@ public class OverclockerEntity extends BlockEntity {
         return multiplier;
     }
     public int increaseMultiplier() {
-        if (multiplier >= MAX_MULTIPLIER) {
-            multiplier = 2;
-        }
-        multiplier += 2;
+        multiplier = Math.min(multiplier+2, MAX_MULTIPLIER);
+        this.setChanged();
+        this.sendUpdates();
+        return multiplier;
+    }
+    public int decreaseMultiplier() {
+        multiplier = Math.max(multiplier-2, 2);
         this.setChanged();
         this.sendUpdates();
         return multiplier;
     }
 
     public static void tick(Level pLevel, BlockPos pPos, BlockState pState, OverclockerEntity pBlockEntity) {
-        if(!pLevel.isClientSide) {
+        if (!pLevel.isClientSide) {
+            boolean shouldBeLit = false;
             // Check if powered by any block besides top block
-            int maxSignal = 0;
-            for (Direction direction : Direction.values()) {
-                if (direction != Direction.UP) {
-                    int signal = pLevel.getSignal(pPos.relative(direction), direction);
-                    maxSignal = Math.max(signal, maxSignal);
-                }
-            }
-            if (maxSignal > 0) {
-                // Disable ticking if receiving redstone power
-                SoulOverclockers.LOGGER.debug("Disabled due to redstone signal");
-                if (pState.getValue(OverclockerBlock.LIT)) {
-                    pState.setValue(OverclockerBlock.LIT, false);
-                    pBlockEntity.setChanged();
-                    pBlockEntity.sendUpdates();
-                }
-                return;
-            }
+            int maxSignal = getMaxSignalExcludingTop(pLevel, pPos);
+
             // Check if block above is block entity or overclocker
             BlockEntity above = pLevel.getBlockEntity(pPos.above());
-            if (above == null || above instanceof OverclockerEntity) {
-                SoulOverclockers.LOGGER.debug("Aborting: not a block entity or Overclocker");
-                if (pState.getValue(OverclockerBlock.LIT)) {
-                    pState.setValue(OverclockerBlock.LIT, false);
-                    pBlockEntity.setChanged();
-                    pBlockEntity.sendUpdates();
+
+            if (maxSignal == 0 && above != null && !(above instanceof OverclockerEntity)) {
+                // Check if tickable
+                BlockEntityTicker<BlockEntity> ticker = above.getBlockState().getTicker(pLevel, (BlockEntityType<BlockEntity>) above.getType());
+                if (ticker != null) {
+                    shouldBeLit = true;
+                    // Tick (mult-1) times
+                    for (int i = 1; i < pBlockEntity.getMultiplier(); i++) {
+                        ticker.tick(pLevel, pPos.above(), above.getBlockState(), above);
+                    }
                 }
-                return;
             }
-            // Check if tickable
-            BlockEntityTicker<BlockEntity> ticker = above.getBlockState().getTicker(pLevel, (BlockEntityType<BlockEntity>) above.getType());
-            if (ticker == null) {
-                SoulOverclockers.LOGGER.debug("Aborting: not tickable");
-                if (pState.getValue(OverclockerBlock.LIT)) {
-                    pState.setValue(OverclockerBlock.LIT, false);
-                    pBlockEntity.setChanged();
-                    pBlockEntity.sendUpdates();
-                }
-                return;
+
+            // Update LIT state
+            updateLitState(pLevel, pPos, pState, pBlockEntity, shouldBeLit);
+        }
+    }
+    private static int getMaxSignalExcludingTop(Level pLevel, BlockPos pPos) {
+        int maxSignal = 0;
+        for (Direction direction : Direction.values()) {
+            if (direction != Direction.UP) {
+                int signal = pLevel.getSignal(pPos.relative(direction), direction);
+                maxSignal = Math.max(signal, maxSignal);
             }
-            if (!pState.getValue(OverclockerBlock.LIT)) {
-                pState.setValue(OverclockerBlock.LIT, true);
-                pBlockEntity.setChanged();
-                pBlockEntity.sendUpdates();
-            }
-            // Tick (mult-1) times
-            for(int i = 1; i < pBlockEntity.getMultiplier(); i++) {
-                ticker.tick(pLevel, pPos.above(), above.getBlockState(), above);
-            }
+        }
+        return maxSignal;
+    }
+    private static void updateLitState(Level pLevel, BlockPos pPos, BlockState pState, OverclockerEntity pBlockEntity, boolean shouldBeLit) {
+        if (pState.getValue(OverclockerBlock.LIT) != shouldBeLit && pLevel.getBlockState(pPos).getValue(OverclockerBlock.LIT) != shouldBeLit) {
+            pLevel.setBlock(pPos, pState.setValue(OverclockerBlock.LIT, shouldBeLit), 3);
+            pBlockEntity.setChanged();
+            pBlockEntity.sendUpdates();
+            pLevel.updateNeighborsAt(pPos, pState.getBlock());
         }
     }
 
