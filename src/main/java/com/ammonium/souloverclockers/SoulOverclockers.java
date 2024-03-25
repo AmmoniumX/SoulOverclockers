@@ -5,8 +5,15 @@ import com.ammonium.souloverclockers.block.entity.OverclockerEntity;
 import com.ammonium.souloverclockers.item.Attuner;
 import com.ammonium.souloverclockers.item.LoreBlockItem;
 import com.ammonium.souloverclockers.item.LoreItem;
+import com.ammonium.souloverclockers.setup.Config;
+import com.ammonium.souloverclockers.setup.Messages;
+import com.ammonium.souloverclockers.soulpower.SoulPower;
+import com.ammonium.souloverclockers.soulpower.SoulPowerProvider;
 import com.mojang.logging.LogUtils;
 import net.minecraft.client.Minecraft;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -18,6 +25,9 @@ import net.minecraft.world.level.material.MaterialColor;
 import net.minecraft.world.level.material.PushReaction;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
+import net.minecraftforge.event.AttachCapabilitiesEvent;
+import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
@@ -78,7 +88,7 @@ public class SoulOverclockers {
 
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
-
+        Config.register();
         // Register block entities
         BLOCK_ENTITIES.register(modEventBus);
         // Register the Deferred Register to the mod event bus so blocks get registered
@@ -94,6 +104,7 @@ public class SoulOverclockers {
     {
         // Some common setup code
 //        LOGGER.info("HELLO FROM COMMON SETUP");
+        Messages.register();
     }
 
     // You can use SubscribeEvent and let the Event Bus discover methods to call
@@ -105,14 +116,33 @@ public class SoulOverclockers {
     }
 
     // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
-    @Mod.EventBusSubscriber(modid = MODID, bus = Mod.EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
-    public static class ClientModEvents
+    @Mod.EventBusSubscriber(modid = MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+    public static class ModEvents
     {
         @SubscribeEvent
-        public static void onClientSetup(FMLClientSetupEvent event)
-        {
-            // Some client setup code
-//            LOGGER.info("HELLO FROM CLIENT SETUP");
+        public static void onAttachCapabilitiesPlayer(AttachCapabilitiesEvent<Entity> event) {
+            if (event.getObject() instanceof Player) {
+                if (!event.getObject().getCapability(SoulPowerProvider.SOUL_POWER).isPresent()) {
+                    event.addCapability(new ResourceLocation(SoulOverclockers.MODID, "properties"), new SoulPowerProvider());
+                }
+            }
         }
+
+        @SubscribeEvent
+        public static void onPlayerCloned(PlayerEvent.Clone event) {
+            if (event.isWasDeath()) {
+                event.getOriginal().getCapability(SoulPowerProvider.SOUL_POWER).ifPresent(oldStore -> {
+                    event.getOriginal().getCapability(SoulPowerProvider.SOUL_POWER).ifPresent(newStore -> {
+                        newStore.copyFrom(oldStore);
+                    });
+                });
+            }
+        }
+
+        @SubscribeEvent
+        public static void onRegisterCapabilities(RegisterCapabilitiesEvent event) {
+            event.register(SoulPower.class);
+        }
+
     }
 }

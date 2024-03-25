@@ -1,5 +1,7 @@
 {
   "block.souloverclockers.overclocker": "Soul Overclocker",
   "itemGroup.souloverclockers": "Soul Overclockers",
-  "item.souloverclockers.attuner": "Soul Attuner"
+  "item.souloverclockers.attuner": "Soul Attuner",
+  "gui.sp_message": "Soul Power: ",
+  "gui.sp_symbol": "φ"
 }

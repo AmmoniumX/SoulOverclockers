@@ -2,7 +2,14 @@ package com.ammonium.souloverclockers.block;
 
 import com.ammonium.souloverclockers.SoulOverclockers;
 import com.ammonium.souloverclockers.block.entity.OverclockerEntity;
+import com.ammonium.souloverclockers.network.CapabilitySyncPacket;
+import com.ammonium.souloverclockers.setup.Messages;
+import com.ammonium.souloverclockers.soulpower.SoulPowerProvider;
 import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.BaseEntityBlock;
@@ -27,6 +34,43 @@ public class OverclockerBlock extends BaseEntityBlock {
                 .lightLevel(state -> 0)
         );
     }
+    @Override
+    public void setPlacedBy(Level world, BlockPos pos, BlockState state, @Nullable LivingEntity entity, ItemStack stack) {
+        super.setPlacedBy(world, pos, state, entity, stack);
+        if (!world.isClientSide && entity instanceof Player) {
+            Player player = (Player) entity;
+            BlockEntity be = world.getBlockEntity(pos);
+            if (be instanceof OverclockerEntity overclocker) {
+                overclocker.setOwner(player.getUUID());
+//                SoulOverclockers.LOGGER.debug("Pre-setting overclocker multiplier to 2");
+                if (!overclocker.setMultiplier(2)) {
+                    SoulOverclockers.LOGGER.debug("Failed to set overclocker multiplier");
+                }
+            }
+        }
+    }
+
+    @Override
+    public void onRemove(BlockState pState, Level pLevel, BlockPos pPos, BlockState pNewState, boolean pIsMoving) {
+        if (!pState.is(pNewState.getBlock())) {
+            if (!pLevel.isClientSide) {
+                BlockEntity be = pLevel.getBlockEntity(pPos);
+                if (be instanceof OverclockerEntity overclocker) {
+                    ServerPlayer player = (ServerPlayer) overclocker.getPlayerOwner();
+                    if (player == null) return;
+                    player.getCapability(SoulPowerProvider.SOUL_POWER).ifPresent(soulPower -> {
+                        soulPower.removeUsed(overclocker.getMultiplier());
+//                        SoulOverclockers.LOGGER.debug("Removed " + overclocker.getMultiplier() + " soul power. Now at " +
+//                                soulPower.getUsed() + "/" + soulPower.getCapacity());
+                        Messages.sendToPlayer(new CapabilitySyncPacket(soulPower.getUsed(), soulPower.getCapacity(),
+                                overclocker.getOwnerUUID()), player);
+                    });
+                }
+            }
+        }
+        super.onRemove(pState, pLevel, pPos, pNewState, pIsMoving);
+    }
+
     @Nullable
     @Override
     public BlockEntity newBlockEntity(BlockPos pPos, BlockState pState) {
@@ -40,7 +84,7 @@ public class OverclockerBlock extends BaseEntityBlock {
 
     @Override
     public BlockState getStateForPlacement(BlockPlaceContext pContext) {
-        return this.defaultBlockState().setValue(LIT, true);
+        return this.defaultBlockState().setValue(LIT, false);
     }
 
     @Override
