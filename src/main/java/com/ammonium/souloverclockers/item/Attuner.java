@@ -2,12 +2,14 @@ package com.ammonium.souloverclockers.item;
 
 import com.ammonium.souloverclockers.SoulOverclockers;
 import com.ammonium.souloverclockers.block.entity.OverclockerEntity;
+import com.ammonium.souloverclockers.setup.Config;
 import com.ammonium.souloverclockers.soulpower.SoulPower;
 import com.ammonium.souloverclockers.soulpower.SoulPowerProvider;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionResult;
@@ -53,20 +55,36 @@ public class Attuner extends LoreItem {
             return InteractionResult.FAIL;
         }
 
-        boolean shifting = player.isShiftKeyDown();
+        boolean increase = !player.isShiftKeyDown();
+        int old = overclocker.getMultiplier();
         int multiplier;
 
-        if (shifting) {
-            multiplier = overclocker.decreaseMultiplier();
-        } else {
+        if (increase) {
             multiplier = overclocker.increaseMultiplier();
+        } else {
+            multiplier = overclocker.decreaseMultiplier();
         }
-        String message = (shifting ? "Decreased" : "Increased") + " overclocker multiplier to " + multiplier +". "+
-                ChatFormatting.DARK_PURPLE + I18n.get("gui.sp_message") + " " +
-                soulPower.getUsed() + "/" + soulPower.getCapacity() + I18n.get("gui.sp_symbol");
-        SoulOverclockers.LOGGER.info(message);
-        player.sendSystemMessage(Component.literal(message));
-        player.playNotifySound(SoundEvents.LEVER_CLICK, SoundSource.PLAYERS, 1.0f, (shifting ? 0.5f : 1.0f));
+        MutableComponent message;
+        float pitch = (increase ? 1.0f : 0.75f);
+        if (old == multiplier) {
+            if (increase) {
+                if (multiplier == Config.MAX_MULTIPLIER.get()) {
+                    message = Component.translatable("gui.oc_max", multiplier);
+                } else {
+                    message = Component.translatable("gui.oc_insufficient", multiplier);
+                }
+            } else {
+                message = Component.translatable("gui.oc_remain", multiplier);
+            }
+            pitch = 0.5f;
+        } else {
+            message= Component.translatable((increase ? "gui.oc_increase" : "gui.oc_decrease"), multiplier);
+        }
+        message.append(Component.translatable("gui.sp_message", (soulPower.getUsed()+"/"+soulPower.getCapacity())).withStyle(ChatFormatting.DARK_PURPLE));
+
+        SoulOverclockers.LOGGER.info(message.getString());
+        player.sendSystemMessage(message);
+        player.playNotifySound(SoundEvents.LEVER_CLICK, SoundSource.PLAYERS, 1.0f, pitch);
         return InteractionResult.SUCCESS;
     }
 }

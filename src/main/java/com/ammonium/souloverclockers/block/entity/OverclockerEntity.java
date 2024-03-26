@@ -26,7 +26,6 @@ import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.energy.EnergyStorage;
 import net.minecraftforge.energy.IEnergyStorage;
-import net.minecraftforge.network.PacketDistributor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nullable;
@@ -35,15 +34,19 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class OverclockerEntity extends BlockEntity implements IEnergyStorage {
+    private boolean running = false;
     private int multiplier = 0;
+    private int tickCounter = 0;
     private UUID ownerUUID;
-    private final EnergyStorage energyStorage = new EnergyStorage(Config.OVERCLOCKER_FE_CAPACITY.get(), Config.OVERCLOCKER_FE_INSERT.get(), 0);
+    private String ownerName;
+    private final InsertOnlyEnergyStorage energyStorage = new InsertOnlyEnergyStorage(Config.OVERCLOCKER_FE_CAPACITY.get(), Config.OVERCLOCKER_FE_TRANSFER.get());
     private final LazyOptional<IEnergyStorage> energy = LazyOptional.of(() -> energyStorage);
     public OverclockerEntity(BlockPos pPos, BlockState pBlockState) {
         super(SoulOverclockers.OVERCLOCKER_ENTITY.get(), pPos, pBlockState);
     }
-    public void setOwner(UUID ownerUUID) {
+    public void setOwner(UUID ownerUUID, String ownerName) {
         this.ownerUUID = ownerUUID;
+        this.ownerName = ownerName;
         this.setChanged();
         this.sendUpdates();
     }
@@ -51,6 +54,11 @@ public class OverclockerEntity extends BlockEntity implements IEnergyStorage {
     @Nullable
     public UUID getOwnerUUID() {
         return this.ownerUUID;
+    }
+
+    @Nullable
+    public String getOwnerName() {
+        return ownerName;
     }
 
     // Energy Storage methods
@@ -151,6 +159,8 @@ public class OverclockerEntity extends BlockEntity implements IEnergyStorage {
             boolean success = soulPower.addUsed(toSet);
             if(success) {
                 multiplier = toSet;
+                this.sendUpdates();
+                this.setChanged();
                 syncCapabilities(this.level, soulPower);
             }
             toReturn.set(success);
@@ -165,6 +175,22 @@ public class OverclockerEntity extends BlockEntity implements IEnergyStorage {
         Messages.sendToPlayer(new CapabilitySyncPacket(soulPower.getUsed(), soulPower.getCapacity(), this.ownerUUID), (ServerPlayer) getPlayerOwner());
     }
 
+    public int getFETick() {
+        return this.multiplier * Config.FE_COST_MULTIPLIER.get();
+    }
+
+    public void setRunning(boolean running) {
+        if (this.running != running) {
+            this.running = running;
+            this.setChanged();
+            this.sendUpdates();
+        }
+    }
+
+    public boolean isRunning() {
+        return this.running;
+    }
+
     @Nullable
     public Player getPlayerOwner() {
         if (level == null || this.getOwnerUUID() == null) return null;
@@ -173,6 +199,14 @@ public class OverclockerEntity extends BlockEntity implements IEnergyStorage {
 
     public static void tick(Level pLevel, BlockPos pPos, BlockState pState, OverclockerEntity pBlockEntity) {
         if (!pLevel.isClientSide) {
+
+            // When not running (idle), only run tick function every 1 second
+            if (!pBlockEntity.running) {
+                pBlockEntity.tickCounter++;
+                if (pBlockEntity.tickCounter < 20) return;
+                pBlockEntity.tickCounter = 0;
+            }
+
             boolean shouldBeLit = false;
             // Check if powered by any block besides top block
             int maxSignal = getMaxSignalExcludingTop(pLevel, pPos);
@@ -184,18 +218,21 @@ public class OverclockerEntity extends BlockEntity implements IEnergyStorage {
                 // Check if tickable
                 BlockEntityTicker<BlockEntity> ticker = above.getBlockState().getTicker(pLevel, (BlockEntityType<BlockEntity>) above.getType());
                 if (ticker != null) {
-                    shouldBeLit = true;
                     // Tick (mult-1) times
+//                    SoulOverclockers.LOGGER.debug("Block energy: "+pBlockEntity.energyStorage.getEnergyStored());
                     int toExtract = pBlockEntity.getMultiplier() * Config.FE_COST_MULTIPLIER.get();
-                    if (pBlockEntity.energyStorage.extractEnergy(toExtract, true) == toExtract) {
-                        pBlockEntity.energyStorage.extractEnergy(toExtract, false);
+                    int testExtract = pBlockEntity.energyStorage.secureExtractEnergy(toExtract, true);
+//                    SoulOverclockers.LOGGER.debug("Test extracted "+testExtract+" out of "+toExtract);
+                    if (toExtract == testExtract) {
+                        shouldBeLit = true;
+                        pBlockEntity.energyStorage.secureExtractEnergy(toExtract, false);
                         for (int i = 1; i < pBlockEntity.getMultiplier(); i++) {
                             ticker.tick(pLevel, pPos.above(), above.getBlockState(), above);
                         }
                     }
                 }
             }
-
+            pBlockEntity.setRunning(shouldBeLit);
             updateLitState(pLevel, pPos, pState, pBlockEntity, shouldBeLit);
         }
     }
@@ -254,8 +291,9 @@ public class OverclockerEntity extends BlockEntity implements IEnergyStorage {
         CompoundTag tag = super.getUpdateTag();
         tag.putInt("multiplier", this.multiplier);
         tag.put("energy", energyStorage.serializeNBT());
-        if (ownerUUID != null) {
-            tag.putUUID("owner", ownerUUID);
+        if (ownerUUID != null && ownerName != null) {
+            tag.putUUID("ownerUUID", ownerUUID);
+            tag.putString("ownerName", ownerName);
         }
         return tag;
     }
@@ -264,8 +302,9 @@ public class OverclockerEntity extends BlockEntity implements IEnergyStorage {
         super.handleUpdateTag(tag);
         this.multiplier = tag.getInt("multiplier");
         energyStorage.deserializeNBT(tag.get("energy"));
-        if (tag.contains("owner")) {
-            ownerUUID = tag.getUUID("owner");
+        if (tag.contains("ownerUUID") && tag.contains("ownerName")) {
+            ownerUUID = tag.getUUID("ownerUUID");
+            ownerName = tag.getString("ownerName");
         }
     }
 
@@ -274,8 +313,9 @@ public class OverclockerEntity extends BlockEntity implements IEnergyStorage {
         super.saveAdditional(tag);
         tag.putInt("multiplier", this.multiplier);
         tag.put("energy", energyStorage.serializeNBT());
-        if (ownerUUID != null) {
-            tag.putUUID("owner", ownerUUID);
+        if (ownerUUID != null && ownerName != null) {
+            tag.putUUID("ownerUUID", ownerUUID);
+            tag.putString("ownerName", ownerName);
         }
     }
     @Override
@@ -283,8 +323,9 @@ public class OverclockerEntity extends BlockEntity implements IEnergyStorage {
         super.load(tag);
         this.multiplier = tag.getInt("multiplier");
         energyStorage.deserializeNBT(tag.get("energy"));
-        if (tag.contains("owner")) {
-            ownerUUID = tag.getUUID("owner");
+        if (tag.contains("ownerUUID") && tag.contains("ownerName")) {
+            ownerUUID = tag.getUUID("ownerUUID");
+            ownerName = tag.getString("ownerName");
         }
     }
     @Override

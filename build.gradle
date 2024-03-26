@@ -77,7 +77,7 @@ minecraft {
                     source sourceSets.main
                 }
             }
-            // Allow patchouli and curios to run in dev
+            // Allow other mods to run in dev
             property 'mixin.env.remapRefMap', 'true'
             property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
         }
@@ -97,7 +97,7 @@ minecraft {
                 }
             }
 
-            // Allow patchouli and curios to run in dev
+            // Allow other mods to run in dev
             property 'mixin.env.remapRefMap', 'true'
             property 'mixin.env.refMapRemappingFile', "${projectDir}/build/createSrgToMcp/output.srg"
         }
@@ -160,6 +160,12 @@ repositories {
         url = 'https://maven.blamejared.com'
         name = 'BlameJared Maven'
     }
+    maven {
+        url "https://www.cursemaven.com"
+        content {
+            includeGroup "curse.maven"
+        }
+    }
     // If you have mod jar dependencies in ./libs, you can declare them as a repository like so:
     // flatDir {
     //     dir 'libs'
@@ -170,7 +176,7 @@ dependencies {
     // Specify the version of Minecraft to use. If this is any group other than 'net.minecraft', it is assumed
     // that the dep is a ForgeGradle 'patcher' dependency, and its patches will be applied.
     // The userdev artifact is a special name and will get all sorts of transformations applied to it.
-    minecraft 'net.minecraftforge:forge:1.19.2-43.2.0'
+    minecraft 'net.minecraftforge:forge:1.19.2-43.2.8'
 
     // Real mod deobf dependency examples - these get remapped to your current mappings
 //     compileOnly fg.deobf("mezz.jei:jei-${mc_version}:${jei_version}:api") // Adds JEI API as a compile dependency
@@ -183,8 +189,8 @@ dependencies {
     runtimeOnly fg.deobf("mezz.jei:jei-${mc_version}-forge:${jei_version}")
 
     // add patchouli as an optional dependency
-    compileOnly fg.deobf("vazkii.patchouli:Patchouli:${patchouli_version}:api")
-    runtimeOnly fg.deobf("vazkii.patchouli:Patchouli:${patchouli_version}")
+//    compileOnly fg.deobf("vazkii.patchouli:Patchouli:${patchouli_version}:api")
+//    runtimeOnly fg.deobf("vazkii.patchouli:Patchouli:${patchouli_version}")
 
     // add curios dependency
     compileOnly(fg.deobf("top.theillusivec4.curios:curios-forge:${curios_version}:api"))
@@ -196,6 +202,9 @@ dependencies {
     // For more info...
     // http://www.gradle.org/docs/current/userguide/artifact_dependencies_tutorial.html
     // http://www.gradle.org/docs/current/userguide/dependency_management.html
+
+    // Add cursemaven mods
+    implementation fg.deobf("curse.maven:jade-324717:${jade_id}")
 }
 
 // Example for how to get properties into the manifest for reading at runtime.

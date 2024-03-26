@@ -4,6 +4,7 @@ import com.ammonium.souloverclockers.block.OverclockerBlock;
 import com.ammonium.souloverclockers.block.entity.OverclockerEntity;
 import com.ammonium.souloverclockers.item.*;
 import com.ammonium.souloverclockers.network.CapabilitySyncPacket;
+import com.ammonium.souloverclockers.recipe.NBTCraftingRecipe;
 import com.ammonium.souloverclockers.setup.Config;
 import com.ammonium.souloverclockers.setup.Messages;
 import com.ammonium.souloverclockers.soulpower.SoulPower;
@@ -17,6 +18,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.material.Material;
@@ -58,6 +60,8 @@ public class SoulOverclockers {
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, MODID);
     // BlockEntities deferred register
     public static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITIES = DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, MODID);
+
+    public static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZERS = DeferredRegister.create(ForgeRegistries.RECIPE_SERIALIZERS, MODID);
     public static final CreativeModeTab CREATIVE_TAB = new CreativeModeTab("souloverclockers") {
         @Override
         public @NotNull ItemStack makeIcon() {
@@ -80,20 +84,23 @@ public class SoulOverclockers {
 
     public static final RegistryObject<Item> EYE = ITEMS.register("eye", Eye::new);
 
-    private static RegistryObject<Item> registerSoulGear(String name) {
-        return ITEMS.register(name, () -> new SoulGear());
+    private static RegistryObject<Item> registerSoulGear(String name, int power) {
+        return ITEMS.register(name, () -> new SoulGear(power));
     }
-    public static final RegistryObject<Item> RING = registerSoulGear("ring");
-    public static final RegistryObject<Item> RING_ADV = registerSoulGear("ring_adv");
-    public static final RegistryObject<Item> AMULET = registerSoulGear("amulet");
-    public static final RegistryObject<Item> AMULET_ADV = registerSoulGear("amulet_adv");
+    public static final RegistryObject<Item> RING = registerSoulGear("ring", 16);
+    public static final RegistryObject<Item> RING_ADV = registerSoulGear("ring_adv", 32);
+    public static final RegistryObject<Item> AMULET = registerSoulGear("amulet", 16);
+    public static final RegistryObject<Item> AMULET_ADV = registerSoulGear("amulet_adv", 32);
 
     public static final RegistryObject<Item> ATTUNER = ITEMS.register("attuner", Attuner::new);
     public static final RegistryObject<Block> OVERCLOCKER_BLOCK = registerLoreBlock("overclocker",
-            OverclockerBlock::new, "Accelerates machines placed directly above it! Requires Soul Power");
+            OverclockerBlock::new, "Accelerates machines placed directly above it! Requires Soul Power and Forge Energy");
     public static final RegistryObject<BlockEntityType<OverclockerEntity>> OVERCLOCKER_ENTITY =
             BLOCK_ENTITIES.register("overclocker", () -> BlockEntityType.Builder.of(OverclockerEntity::new,
                     OVERCLOCKER_BLOCK.get()).build(null));
+
+    public static final RegistryObject<RecipeSerializer<?>> NBT_CRAFTING_RECIPE = RECIPE_SERIALIZERS.register("crafting_shaped_nbt", NBTCraftingRecipe.Serializer::new);
+
     public SoulOverclockers()
     {
         IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
@@ -101,12 +108,11 @@ public class SoulOverclockers {
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
         Config.register();
-        // Register block entities
+        // Register deferred registers
         BLOCK_ENTITIES.register(modEventBus);
-        // Register the Deferred Register to the mod event bus so blocks get registered
         BLOCKS.register(modEventBus);
-        // Register the Deferred Register to the mod event bus so items get registered
         ITEMS.register(modEventBus);
+        RECIPE_SERIALIZERS.register(modEventBus);
 
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
@@ -148,16 +154,19 @@ public class SoulOverclockers {
         public static void refreshSoulPower(ServerPlayer player) {
             AtomicInteger capacity = new AtomicInteger(Config.BASE_SOUL_POWER.get());
             ICuriosHelper helper = CuriosApi.getCuriosHelper();
+
             helper.getEquippedCurios(player).ifPresent(handler -> {
                 for (int i = 0; i < handler.getSlots(); i++) {
                     ItemStack stackInSlot = handler.getStackInSlot(i);
                     CompoundTag tag = stackInSlot.getTag();
+
                     if (tag != null && tag.contains("SoulPower")) {
                         int power = tag.getInt("SoulPower");
                         capacity.addAndGet(power);
                     }
                 }
             });
+
             player.getCapability(SoulPowerProvider.SOUL_POWER).ifPresent(soulPower -> {
                 int newCap = capacity.get();
                 SoulOverclockers.LOGGER.debug("Setting refreshed soul power to "+newCap);

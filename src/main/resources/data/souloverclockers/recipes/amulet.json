@@ -1,0 +1,20 @@
+{
+  "type": "souloverclockers:crafting_shaped_nbt",
+  "pattern": [
+    " # ",
+    "# #",
+    " O "
+  ],
+  "key": {
+    "O": {
+      "item": "souloverclockers:eye"
+    },
+    "#": {
+      "item": "minecraft:string"
+    }
+  },
+  "result": {
+    "item": "souloverclockers:amulet",
+    "nbt": "{SoulPower:16}"
+  }
+}

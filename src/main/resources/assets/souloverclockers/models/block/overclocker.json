@@ -1,7 +1,12 @@
 {
-  "parent": "minecraft:block/cube_column",
+  "parent": "minecraft:block/cube",
   "textures": {
-    "end": "souloverclockers:block/machine_side",
-    "side": "souloverclockers:block/overclocker_side"
+    "particle": "souloverclockers:block/machine_side",
+    "down": "souloverclockers:block/machine_side",
+    "up": "souloverclockers:block/overclocker_top",
+    "north": "souloverclockers:block/overclocker_side",
+    "south": "souloverclockers:block/overclocker_side",
+    "east": "souloverclockers:block/overclocker_side",
+    "west": "souloverclockers:block/overclocker_side"
   }
 }

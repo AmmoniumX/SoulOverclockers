@@ -1,0 +1,23 @@
+{
+  "type": "souloverclockers:crafting_shaped_nbt",
+  "pattern": [
+    " D ",
+    "#O#",
+    " # "
+  ],
+  "key": {
+    "O": {
+      "item": "souloverclockers:ring"
+    },
+    "#": {
+      "item": "minecraft:gold_ingot"
+    },
+    "D": {
+      "item": "minecraft:diamond"
+    }
+  },
+  "result": {
+    "item": "souloverclockers:ring_adv",
+    "nbt": "{SoulPower:32}"
+  }
+}

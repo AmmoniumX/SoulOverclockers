@@ -7,6 +7,16 @@
   "item.souloverclockers.ring_adv": "Advanced Soul Ring",
   "item.souloverclockers.amulet": "Soul Amulet",
   "item.souloverclockers.amulet_adv": "Advanced Soul Amulet",
-  "gui.sp_message": "Soul Power: ",
-  "gui.sp_symbol": "φ"
+  "gui.sp": "%sφ",
+  "gui.sp_message": "Soul Power: %sφ",
+  "gui.oc_increase": "Increased Overclocking speed to: %s. ",
+  "gui.oc_decrease": "Decreased Overclocking speed to: %s. ",
+  "gui.oc_insufficient": "Not enough Soul Power available, Overclocking speed remains at: %s. ",
+  "gui.oc_remain": "Overclocking speed remains at: %s. ",
+  "gui.oc_max": "Overclocking speed is maxed out at: %s. ",
+  "config.jade.plugin_souloverclockers.overclocker_component": "SoulOverclockers data provider",
+  "tooltip.overclocker.owner": "Owner: %s",
+  "tooltip.overclocker.status.running": "Running",
+  "tooltip.overclocker.status.idle": "Idle",
+  "tooltip.overclocker.energy": "%sfe/t"
 }

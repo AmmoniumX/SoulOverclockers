@@ -1,0 +1,20 @@
+{
+  "type": "souloverclockers:crafting_shaped_nbt",
+  "pattern": [
+    " # ",
+    "#O#",
+    " # "
+  ],
+  "key": {
+    "O": {
+      "item": "souloverclockers:amulet"
+    },
+    "#": {
+      "item": "minecraft:diamond"
+    }
+  },
+  "result": {
+    "item": "souloverclockers:amulet_adv",
+    "nbt": "{SoulPower:32}"
+  }
+}

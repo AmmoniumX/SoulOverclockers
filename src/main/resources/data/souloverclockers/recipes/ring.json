@@ -1,0 +1,23 @@
+{
+  "type": "souloverclockers:crafting_shaped_nbt",
+  "pattern": [
+    "#O#",
+    "E E",
+    "#E#"
+  ],
+  "key": {
+    "O": {
+      "item": "souloverclockers:eye"
+    },
+    "#": {
+      "item": "minecraft:iron_nugget"
+    },
+    "E": {
+      "item": "minecraft:iron_ingot"
+    }
+  },
+  "result": {
+    "item": "souloverclockers:ring",
+    "nbt": "{SoulPower:16}"
+  }
+}

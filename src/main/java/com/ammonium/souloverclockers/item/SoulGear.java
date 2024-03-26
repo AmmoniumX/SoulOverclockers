@@ -5,53 +5,47 @@ import com.ammonium.souloverclockers.network.CapabilitySyncPacket;
 import com.ammonium.souloverclockers.setup.Messages;
 import com.ammonium.souloverclockers.soulpower.SoulPower;
 import com.ammonium.souloverclockers.soulpower.SoulPowerProvider;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.resources.language.I18n;
+import net.minecraft.core.NonNullList;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
 import top.theillusivec4.curios.api.SlotContext;
 import top.theillusivec4.curios.api.type.capability.ICurioItem;
 
-public class SoulGear extends LoreItem implements ICurioItem {
-    public SoulGear() {
-        super(new Item.Properties().tab(SoulOverclockers.CREATIVE_TAB).stacksTo(1), "Wear to increase your Soul Power.");
+import javax.annotation.Nullable;
+import java.util.List;
+
+public class SoulGear extends Item implements ICurioItem {
+    private final int power;
+    public SoulGear(int power) {
+        super(new Item.Properties().tab(SoulOverclockers.CREATIVE_TAB).stacksTo(1));
+        this.power = power;
     }
 
     @Override
-    public void curioTick(SlotContext slotContext, ItemStack stack) {
-        // ticking logic here
+    public void appendHoverText(ItemStack stack, @Nullable Level world, List<Component> tooltip, TooltipFlag flag) {
+        super.appendHoverText(stack, world, tooltip, flag);
+        CompoundTag tag = stack.getTag();
+        if (tag != null && tag.contains("SoulPower")) {
+            tooltip.add(Component.literal("When worn: increases Soul Power by ").withStyle(ChatFormatting.DARK_PURPLE)
+                    .append(Component.translatable("gui.sp", tag.getInt("SoulPower")).withStyle(ChatFormatting.DARK_PURPLE)));
+        }
     }
 
-//    @Override
-//    public void onEquip(SlotContext slotContext, ItemStack prevStack, ItemStack stack) {
-//        Level level = slotContext.entity().getLevel();
-//        if (level.isClientSide() || !(level instanceof ServerLevel serverLevel)) return;
-//        if (!(slotContext.entity() instanceof ServerPlayer player)) return;
-//        player.getCapability(SoulPowerProvider.SOUL_POWER).ifPresent(soulPower -> {
-//            if (stack.getTag() == null || !stack.getTag().contains("SoulPower")) return;
-//            soulPower.addCapacity(stack.getTag().getInt("SoulPower"));
-//            syncCapabilities(serverLevel, soulPower, player);
-//        });
-//        ICurioItem.super.onEquip(slotContext, prevStack, stack);
-//    }
-//
-//    @Override
-//    public void onUnequip(SlotContext slotContext, ItemStack newStack, ItemStack stack) {
-//        Level level = slotContext.entity().getLevel();
-//        if (level.isClientSide() || !(level instanceof ServerLevel serverLevel)) return;
-//        if (!(slotContext.entity() instanceof ServerPlayer player)) return;
-//        player.getCapability(SoulPowerProvider.SOUL_POWER).ifPresent(soulPower -> {
-//            if (stack.getTag() == null || !stack.getTag().contains("SoulPower")) return;
-//            soulPower.removeCapacity(stack.getTag().getInt("SoulPower"));
-//            syncCapabilities(serverLevel, soulPower, player);
-//        });
-//        ICurioItem.super.onUnequip(slotContext, newStack, stack);
-//    }
-//
-//    public void syncCapabilities(ServerLevel level, SoulPower soulPower, ServerPlayer player) {
-//        if (level.isClientSide()) return;
-//        SoulOverclockers.LOGGER.debug("Syncing soul power "+soulPower.getUsed()+"/"+soulPower.getCapacity());
-//        Messages.sendToPlayer(new CapabilitySyncPacket(soulPower.getUsed(), soulPower.getCapacity(), player.getUUID()), player);
-//    }
+    @Override
+    public void fillItemCategory(CreativeModeTab category, NonNullList<ItemStack> items) {
+        if (this.allowedIn(category)) {
+            ItemStack stack = new ItemStack(this);
+            stack.getOrCreateTag().putInt("SoulPower", this.power);
+            items.add(stack);
+        }
+    }
 }

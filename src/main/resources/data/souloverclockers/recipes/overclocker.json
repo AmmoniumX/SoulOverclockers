@@ -1,0 +1,25 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "#+#",
+    "EOE",
+    "###"
+  ],
+  "key": {
+    "O": {
+      "item": "souloverclockers:eye"
+    },
+    "#": {
+      "item": "minecraft:obsidian"
+    },
+    "E": {
+      "item": "minecraft:crying_obsidian"
+    },
+    "+": {
+      "item": "minecraft:quartz_block"
+    }
+  },
+  "result": {
+    "item": "souloverclockers:overclocker"
+  }
+}

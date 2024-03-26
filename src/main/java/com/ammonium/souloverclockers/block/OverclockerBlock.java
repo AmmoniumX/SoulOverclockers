@@ -41,7 +41,7 @@ public class OverclockerBlock extends BaseEntityBlock {
             Player player = (Player) entity;
             BlockEntity be = world.getBlockEntity(pos);
             if (be instanceof OverclockerEntity overclocker) {
-                overclocker.setOwner(player.getUUID());
+                overclocker.setOwner(player.getUUID(), player.getName().getString());
 //                SoulOverclockers.LOGGER.debug("Pre-setting overclocker multiplier to 2");
                 if (!overclocker.setMultiplier(2)) {
                     SoulOverclockers.LOGGER.debug("Failed to set overclocker multiplier");

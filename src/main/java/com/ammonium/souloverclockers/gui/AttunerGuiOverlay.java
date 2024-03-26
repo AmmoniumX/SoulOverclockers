@@ -7,6 +7,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.language.I18n;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.RenderGuiOverlayEvent;
@@ -16,7 +17,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 @Mod.EventBusSubscriber(value = Dist.CLIENT)
-public class AttunerHUDOverlay {
+public class AttunerGuiOverlay {
 
     @SubscribeEvent
     public static void onRenderGuiOverlay(RenderGuiOverlayEvent.Post event) {
@@ -40,12 +41,12 @@ public class AttunerHUDOverlay {
         int width = mc.getWindow().getGuiScaledWidth();
         int height = mc.getWindow().getGuiScaledHeight();
 
-        String str = ChatFormatting.BOLD + I18n.get("gui.sp_message") + ClientCapabilityData.getUsed() + "/"
-                + ClientCapabilityData.getCap() + ChatFormatting.RESET + I18n.get("gui.sp_symbol");
+        String str = Component.translatable("gui.sp_message", (ClientCapabilityData.getUsed()+"/"+ClientCapabilityData.getCap()))
+                .withStyle(ChatFormatting.DARK_PURPLE).getString();
         int strWidth = mc.font.width(str);
 
         int x = (width - strWidth) / 2;
-        int y = height - 80;
+        int y = height - 70;
 
         RenderSystem.enableBlend();
 

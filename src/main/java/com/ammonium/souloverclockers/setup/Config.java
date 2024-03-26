@@ -9,7 +9,7 @@ public class Config {
     public static ForgeConfigSpec.IntValue FE_COST_MULTIPLIER;
 
     public static ForgeConfigSpec.IntValue OVERCLOCKER_FE_CAPACITY;
-    public static ForgeConfigSpec.IntValue OVERCLOCKER_FE_INSERT;
+    public static ForgeConfigSpec.IntValue OVERCLOCKER_FE_TRANSFER;
     public static ForgeConfigSpec.IntValue BASE_SOUL_POWER;
 
     // Soul gear values
@@ -39,9 +39,9 @@ public class Config {
         OVERCLOCKER_FE_CAPACITY = config
                 .comment("Internal FE capacity for overclocker. Should hold at least enough to run at maximum speed for 1 tick (MAX_MULTIPLIER*FE_COST_MULTIPLIER)")
                 .defineInRange("overclocker_fe_capacity", 100000, 0, Integer.MAX_VALUE);
-        OVERCLOCKER_FE_INSERT = config
+        OVERCLOCKER_FE_TRANSFER = config
                 .comment("Max FE insertion speed for overclocker. Must be less than or equal to OVERCLOCKER_FE_CAPACITY")
-                .defineInRange("overclocker_fe_insert", 10000, 0, Integer.MAX_VALUE);
+                .defineInRange("overclocker_fe_transfer", 10000, 0, Integer.MAX_VALUE);
         BASE_SOUL_POWER = config
                 .comment("Base Soul Power each player has when logging in, without any additional equipment. Big values may affect server performance!")
                 .defineInRange("base_soul_power", 64, 2, Integer.MAX_VALUE);

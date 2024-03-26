@@ -69,12 +69,6 @@ Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed mollis lacinia magn
     ordering="NONE"
     side="BOTH"
 [[dependencies.souloverclockers]]
-    modId="patchouli"
-    mandatory=true
-    versionRange="[1.19.2-77,)"
-    ordering="NONE"
-    side="BOTH"
-[[dependencies.souloverclockers]]
     modId="curios"
     mandatory=true
     versionRange="[1.19.2-5.1.6.1,)"
