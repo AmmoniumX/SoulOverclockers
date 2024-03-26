@@ -9,6 +9,7 @@ import com.ammonium.souloverclockers.setup.Messages;
 import com.ammonium.souloverclockers.soulpower.SoulPower;
 import com.ammonium.souloverclockers.soulpower.SoulPowerProvider;
 import com.mojang.logging.LogUtils;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
@@ -37,6 +38,7 @@ import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import top.theillusivec4.curios.api.CuriosApi;
+import top.theillusivec4.curios.api.event.CurioChangeEvent;
 import top.theillusivec4.curios.api.type.util.ICuriosHelper;
 
 import java.util.HashMap;
@@ -131,26 +133,34 @@ public class SoulOverclockers {
     {
         @SubscribeEvent
         public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event){
-            SoulOverclockers.LOGGER.debug("Syncing player data");
+            SoulOverclockers.LOGGER.debug("(PlayerLoggedInEvent) Refreshing soul power");
             if (!(event.getEntity() instanceof ServerPlayer player)) return;
+            refreshSoulPower(player);
+        }
+
+        @SubscribeEvent
+        public static void onCurioChange(CurioChangeEvent event) {
+            SoulOverclockers.LOGGER.debug("(CurioChangeEvent) Refreshing soul power");
+            if (!(event.getEntity() instanceof ServerPlayer player)) return;
+            refreshSoulPower(player);
+        }
+
+        public static void refreshSoulPower(ServerPlayer player) {
             AtomicInteger capacity = new AtomicInteger(Config.BASE_SOUL_POWER.get());
             ICuriosHelper helper = CuriosApi.getCuriosHelper();
             helper.getEquippedCurios(player).ifPresent(handler -> {
-//                SoulOverclockers.LOGGER.debug("Analyzing over "+handler.getSlots()+" slots");
                 for (int i = 0; i < handler.getSlots(); i++) {
                     ItemStack stackInSlot = handler.getStackInSlot(i);
-//                    SoulOverclockers.LOGGER.debug("Analyzing stack: "+stackInSlot.getDisplayName());
-                    if (stackInSlot.getTag() == null || !stackInSlot.getTag().contains("SoulPower")) continue;
-                    if (stackInSlot.hasTag() && stackInSlot.getTag().contains("SoulPower")) {
-                        int power = stackInSlot.getTag().getInt("SoulPower");
-//                        SoulOverclockers.LOGGER.debug("Adding "+power+" soul power");
+                    CompoundTag tag = stackInSlot.getTag();
+                    if (tag != null && tag.contains("SoulPower")) {
+                        int power = tag.getInt("SoulPower");
                         capacity.addAndGet(power);
                     }
                 }
             });
             player.getCapability(SoulPowerProvider.SOUL_POWER).ifPresent(soulPower -> {
                 int newCap = capacity.get();
-                SoulOverclockers.LOGGER.debug("Setting soul capacity on login to "+newCap);
+                SoulOverclockers.LOGGER.debug("Setting refreshed soul power to "+newCap);
                 soulPower.setCapacity(newCap);
                 Messages.sendToPlayer(new CapabilitySyncPacket(soulPower.getUsed(), newCap, player.getUUID()), player);
             });
