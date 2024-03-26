@@ -191,6 +191,9 @@ public class OverclockerEntity extends BlockEntity implements IEnergyStorage {
         return this.running;
     }
 
+    /** Get the owner of this Overclocker
+     * @return player or null if player is offline
+     */
     @Nullable
     public Player getPlayerOwner() {
         if (level == null || this.getOwnerUUID() == null) return null;
@@ -206,6 +209,9 @@ public class OverclockerEntity extends BlockEntity implements IEnergyStorage {
                 if (pBlockEntity.tickCounter < 20) return;
                 pBlockEntity.tickCounter = 0;
             }
+
+            // Check if player is online
+            if (pBlockEntity.getPlayerOwner() == null) return;
 
             boolean shouldBeLit = false;
             // Check if powered by any block besides top block
