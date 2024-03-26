@@ -2,6 +2,11 @@
   "block.souloverclockers.overclocker": "Soul Overclocker",
   "itemGroup.souloverclockers": "Soul Overclockers",
   "item.souloverclockers.attuner": "Soul Attuner",
+  "item.souloverclockers.eye": "Soul Eye",
+  "item.souloverclockers.ring": "Soul Ring",
+  "item.souloverclockers.ring_adv": "Advanced Soul Ring",
+  "item.souloverclockers.amulet": "Soul Amulet",
+  "item.souloverclockers.amulet_adv": "Advanced Soul Amulet",
   "gui.sp_message": "Soul Power: ",
   "gui.sp_symbol": "φ"
 }

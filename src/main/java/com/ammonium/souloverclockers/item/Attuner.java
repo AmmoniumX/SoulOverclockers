@@ -22,12 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class Attuner extends LoreItem {
     public Attuner() {
-        super(new Item.Properties().tab(SoulOverclockers.CREATIVE_TAB), "Hold to view Soul Power. Right click overclockers to speed up. Shift right click to slow down");
-    }
-
-    @Override
-    public int getMaxStackSize(ItemStack stack) {
-        return 1;
+        super(new Item.Properties().tab(SoulOverclockers.CREATIVE_TAB).stacksTo(1), "Hold to view Soul Power. Right click overclockers to speed up. Shift right click to slow down");
     }
 
     @Override

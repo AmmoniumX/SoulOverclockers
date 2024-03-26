@@ -12,13 +12,19 @@ public class Config {
     public static ForgeConfigSpec.IntValue OVERCLOCKER_FE_INSERT;
     public static ForgeConfigSpec.IntValue BASE_SOUL_POWER;
 
+    // Soul gear values
+//    public static ForgeConfigSpec.IntValue RING_POWER;
+//    public static ForgeConfigSpec.IntValue ADV_RING_POWER;
+//    public static ForgeConfigSpec.IntValue AMULET_POWER;
+//    public static ForgeConfigSpec.IntValue ADV_AMULET_POWER;
+
     public static void register(){
         ForgeConfigSpec.Builder serverConfig = new ForgeConfigSpec.Builder();
         registerServerConfigs(serverConfig);
         ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, serverConfig.build());
-        ForgeConfigSpec.Builder clientConfig = new ForgeConfigSpec.Builder();
-        registerClientConfigs(clientConfig);
-        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, clientConfig.build());
+//        ForgeConfigSpec.Builder clientConfig = new ForgeConfigSpec.Builder();
+//        registerClientConfigs(clientConfig);
+//        ModLoadingContext.get().registerConfig(ModConfig.Type.CLIENT, clientConfig.build());
     }
 
     private static void registerServerConfigs(ForgeConfigSpec.Builder config){
@@ -39,14 +45,25 @@ public class Config {
         BASE_SOUL_POWER = config
                 .comment("Base Soul Power each player has when logging in, without any additional equipment. Big values may affect server performance!")
                 .defineInRange("base_soul_power", 64, 2, Integer.MAX_VALUE);
+//        RING_POWER = config
+//                .comment("Additional Soul Power capacity given upon wearing a ring. Set to 0 for no effect.")
+//                .defineInRange("ring_power", 16, 0, Integer.MAX_VALUE);
+//        ADV_RING_POWER = config
+//                .comment("Additional Soul Power capacity given upon wearing an advanced ring. Set to 0 for no effect.")
+//                .defineInRange("adv_ring_power", 24, 0, Integer.MAX_VALUE);
+//        AMULET_POWER = config
+//                .comment("Additional Soul Power capacity given upon wearing an amulet. Set to 0 for no effect.")
+//                .defineInRange("amulet_power", 16, 0, Integer.MAX_VALUE);
+//        ADV_AMULET_POWER = config
+//                .comment("Additional Soul Power capacity given upon wearing an advanced amulet. Set to 0 for no effect.")
+//                .defineInRange("adv_amulet_power", 24, 0, Integer.MAX_VALUE);
         config.pop();
     }
 
-    private static void registerClientConfigs(ForgeConfigSpec.Builder config){
-        config.comment("Client configurations. Options for changing display view")
-                .push("display_config");
-
-        config.pop();
-    }
+//    private static void registerClientConfigs(ForgeConfigSpec.Builder config){
+//        config.comment("Client configurations.")
+//                .push("display_config");
+//        config.pop();
+//    }
 
 }

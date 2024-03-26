@@ -2,28 +2,25 @@ package com.ammonium.souloverclockers;
 
 import com.ammonium.souloverclockers.block.OverclockerBlock;
 import com.ammonium.souloverclockers.block.entity.OverclockerEntity;
-import com.ammonium.souloverclockers.item.Attuner;
-import com.ammonium.souloverclockers.item.LoreBlockItem;
-import com.ammonium.souloverclockers.item.LoreItem;
+import com.ammonium.souloverclockers.item.*;
+import com.ammonium.souloverclockers.network.CapabilitySyncPacket;
 import com.ammonium.souloverclockers.setup.Config;
 import com.ammonium.souloverclockers.setup.Messages;
 import com.ammonium.souloverclockers.soulpower.SoulPower;
 import com.ammonium.souloverclockers.soulpower.SoulPowerProvider;
 import com.mojang.logging.LogUtils;
-import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.material.Material;
 import net.minecraft.world.level.material.MaterialColor;
 import net.minecraft.world.level.material.PushReaction;
-import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
 import net.minecraftforge.event.AttachCapabilitiesEvent;
@@ -31,7 +28,6 @@ import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.event.server.ServerStartingEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
@@ -40,7 +36,11 @@ import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.registries.RegistryObject;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
+import top.theillusivec4.curios.api.CuriosApi;
+import top.theillusivec4.curios.api.type.util.ICuriosHelper;
 
+import java.util.HashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 // The value here should match an entry in the META-INF/mods.toml file
@@ -75,6 +75,16 @@ public class SoulOverclockers {
     }
 
     // Register objects
+
+    public static final RegistryObject<Item> EYE = ITEMS.register("eye", Eye::new);
+
+    private static RegistryObject<Item> registerSoulGear(String name) {
+        return ITEMS.register(name, () -> new SoulGear());
+    }
+    public static final RegistryObject<Item> RING = registerSoulGear("ring");
+    public static final RegistryObject<Item> RING_ADV = registerSoulGear("ring_adv");
+    public static final RegistryObject<Item> AMULET = registerSoulGear("amulet");
+    public static final RegistryObject<Item> AMULET_ADV = registerSoulGear("amulet_adv");
 
     public static final RegistryObject<Item> ATTUNER = ITEMS.register("attuner", Attuner::new);
     public static final RegistryObject<Block> OVERCLOCKER_BLOCK = registerLoreBlock("overclocker",
@@ -117,8 +127,35 @@ public class SoulOverclockers {
 
     // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
     @Mod.EventBusSubscriber(modid = MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
-    public static class ModEvents
+    public static class ForgeEvents
     {
+        @SubscribeEvent
+        public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event){
+            SoulOverclockers.LOGGER.debug("Syncing player data");
+            if (!(event.getEntity() instanceof ServerPlayer player)) return;
+            AtomicInteger capacity = new AtomicInteger(Config.BASE_SOUL_POWER.get());
+            ICuriosHelper helper = CuriosApi.getCuriosHelper();
+            helper.getEquippedCurios(player).ifPresent(handler -> {
+//                SoulOverclockers.LOGGER.debug("Analyzing over "+handler.getSlots()+" slots");
+                for (int i = 0; i < handler.getSlots(); i++) {
+                    ItemStack stackInSlot = handler.getStackInSlot(i);
+//                    SoulOverclockers.LOGGER.debug("Analyzing stack: "+stackInSlot.getDisplayName());
+                    if (stackInSlot.getTag() == null || !stackInSlot.getTag().contains("SoulPower")) continue;
+                    if (stackInSlot.hasTag() && stackInSlot.getTag().contains("SoulPower")) {
+                        int power = stackInSlot.getTag().getInt("SoulPower");
+//                        SoulOverclockers.LOGGER.debug("Adding "+power+" soul power");
+                        capacity.addAndGet(power);
+                    }
+                }
+            });
+            player.getCapability(SoulPowerProvider.SOUL_POWER).ifPresent(soulPower -> {
+                int newCap = capacity.get();
+                SoulOverclockers.LOGGER.debug("Setting soul capacity on login to "+newCap);
+                soulPower.setCapacity(newCap);
+                Messages.sendToPlayer(new CapabilitySyncPacket(soulPower.getUsed(), newCap, player.getUUID()), player);
+            });
+        }
+
         @SubscribeEvent
         public static void onAttachCapabilitiesPlayer(AttachCapabilitiesEvent<Entity> event) {
             if (event.getObject() instanceof Player) {

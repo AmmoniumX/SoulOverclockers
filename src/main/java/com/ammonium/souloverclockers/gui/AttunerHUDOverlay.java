@@ -40,13 +40,15 @@ public class AttunerHUDOverlay {
         int width = mc.getWindow().getGuiScaledWidth();
         int height = mc.getWindow().getGuiScaledHeight();
 
-        int x = width / 2;
-        int y = height - 59;
-
-        RenderSystem.enableBlend();
         String str = ChatFormatting.BOLD + I18n.get("gui.sp_message") + ClientCapabilityData.getUsed() + "/"
                 + ClientCapabilityData.getCap() + ChatFormatting.RESET + I18n.get("gui.sp_symbol");
-//        SoulOverclockers.LOGGER.debug(str);
+        int strWidth = mc.font.width(str);
+
+        int x = (width - strWidth) / 2;
+        int y = height - 80;
+
+        RenderSystem.enableBlend();
+
         mc.font.draw(poseStack, str, x, y, 0xAA00AA);
     }
 }
