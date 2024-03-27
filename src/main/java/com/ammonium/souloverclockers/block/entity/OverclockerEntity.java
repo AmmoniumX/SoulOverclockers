@@ -211,16 +211,20 @@ public class OverclockerEntity extends BlockEntity implements IEnergyStorage {
             }
 
             // Check if player is online
-            if (pBlockEntity.getPlayerOwner() == null) return;
-
             boolean shouldBeLit = false;
+
             // Check if powered by any block besides top block
             int maxSignal = getMaxSignalExcludingTop(pLevel, pPos);
 
             // Check if block above is block entity or overclocker
             BlockEntity above = pLevel.getBlockEntity(pPos.above());
 
-            if (pBlockEntity.getMultiplier() != 0 && maxSignal == 0 && above != null && !(above instanceof OverclockerEntity)) {
+            // Check if satisfies all rules for running
+            boolean canRun = !(Config.REQUIRE_ONLINE.get() && pBlockEntity.getPlayerOwner() == null) &&
+                    pBlockEntity.getMultiplier() != 0 && maxSignal == 0 && above != null &&
+                    !(above instanceof OverclockerEntity);
+
+            if (canRun) {
                 // Check if tickable
                 BlockEntityTicker<BlockEntity> ticker = above.getBlockState().getTicker(pLevel, (BlockEntityType<BlockEntity>) above.getType());
                 if (ticker != null) {

@@ -7,16 +7,10 @@ import net.minecraftforge.fml.config.ModConfig;
 public class Config {
     public static ForgeConfigSpec.IntValue MAX_MULTIPLIER;
     public static ForgeConfigSpec.IntValue FE_COST_MULTIPLIER;
-
     public static ForgeConfigSpec.IntValue OVERCLOCKER_FE_CAPACITY;
     public static ForgeConfigSpec.IntValue OVERCLOCKER_FE_TRANSFER;
     public static ForgeConfigSpec.IntValue BASE_SOUL_POWER;
-
-    // Soul gear values
-//    public static ForgeConfigSpec.IntValue RING_POWER;
-//    public static ForgeConfigSpec.IntValue ADV_RING_POWER;
-//    public static ForgeConfigSpec.IntValue AMULET_POWER;
-//    public static ForgeConfigSpec.IntValue ADV_AMULET_POWER;
+    public static ForgeConfigSpec.BooleanValue REQUIRE_ONLINE;
 
     public static void register(){
         ForgeConfigSpec.Builder serverConfig = new ForgeConfigSpec.Builder();
@@ -45,18 +39,9 @@ public class Config {
         BASE_SOUL_POWER = config
                 .comment("Base Soul Power each player has when logging in, without any additional equipment. Big values may affect server performance!")
                 .defineInRange("base_soul_power", 64, 2, Integer.MAX_VALUE);
-//        RING_POWER = config
-//                .comment("Additional Soul Power capacity given upon wearing a ring. Set to 0 for no effect.")
-//                .defineInRange("ring_power", 16, 0, Integer.MAX_VALUE);
-//        ADV_RING_POWER = config
-//                .comment("Additional Soul Power capacity given upon wearing an advanced ring. Set to 0 for no effect.")
-//                .defineInRange("adv_ring_power", 24, 0, Integer.MAX_VALUE);
-//        AMULET_POWER = config
-//                .comment("Additional Soul Power capacity given upon wearing an amulet. Set to 0 for no effect.")
-//                .defineInRange("amulet_power", 16, 0, Integer.MAX_VALUE);
-//        ADV_AMULET_POWER = config
-//                .comment("Additional Soul Power capacity given upon wearing an advanced amulet. Set to 0 for no effect.")
-//                .defineInRange("adv_amulet_power", 24, 0, Integer.MAX_VALUE);
+        REQUIRE_ONLINE = config
+                .comment("Whether the player has to be online or not for overclockers to work.")
+                .define("require_online", true);
         config.pop();
     }
 
