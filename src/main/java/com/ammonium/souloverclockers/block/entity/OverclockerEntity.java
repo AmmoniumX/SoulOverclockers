@@ -7,16 +7,21 @@ import com.ammonium.souloverclockers.setup.Config;
 import com.ammonium.souloverclockers.setup.Messages;
 import com.ammonium.souloverclockers.soulpower.SoulPower;
 import com.ammonium.souloverclockers.soulpower.SoulPowerProvider;
+import com.ammonium.souloverclockers.tag.BlockTags;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -33,7 +38,10 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+
 public class OverclockerEntity extends BlockEntity implements IEnergyStorage {
+
+
     private boolean running = false;
     private int multiplier = 0;
     private int tickCounter = 0;
@@ -218,27 +226,28 @@ public class OverclockerEntity extends BlockEntity implements IEnergyStorage {
 
             // Check if block above is block entity or overclocker
             BlockEntity above = pLevel.getBlockEntity(pPos.above());
+            if (above == null) return;
+            BlockState aboveBlockState = above.getBlockState();
+//            aboveBlockState.getTags().anyMatch()
+            BlockEntityTicker<BlockEntity> ticker = aboveBlockState.getTicker(pLevel, (BlockEntityType<BlockEntity>) above.getType());
 
             // Check if satisfies all rules for running
             boolean canRun = !(Config.REQUIRE_ONLINE.get() && pBlockEntity.getPlayerOwner() == null) &&
-                    pBlockEntity.getMultiplier() != 0 && maxSignal == 0 && above != null &&
-                    !(above instanceof OverclockerEntity);
+                    pBlockEntity.getMultiplier() != 0 && maxSignal == 0 && !(above instanceof OverclockerEntity) &&
+                    ticker != null && !(aboveBlockState.is(BlockTags.CANT_ACCELERATE) && !(aboveBlockState.is(BlockTags.CANT_OVERCLOCK)));
 
             if (canRun) {
                 // Check if tickable
-                BlockEntityTicker<BlockEntity> ticker = above.getBlockState().getTicker(pLevel, (BlockEntityType<BlockEntity>) above.getType());
-                if (ticker != null) {
-                    // Tick (mult-1) times
+                // Tick (mult-1) times
 //                    SoulOverclockers.LOGGER.debug("Block energy: "+pBlockEntity.energyStorage.getEnergyStored());
-                    int toExtract = pBlockEntity.getMultiplier() * Config.FE_COST_MULTIPLIER.get();
-                    int testExtract = pBlockEntity.energyStorage.secureExtractEnergy(toExtract, true);
+                int toExtract = pBlockEntity.getMultiplier() * Config.FE_COST_MULTIPLIER.get();
+                int testExtract = pBlockEntity.energyStorage.secureExtractEnergy(toExtract, true);
 //                    SoulOverclockers.LOGGER.debug("Test extracted "+testExtract+" out of "+toExtract);
-                    if (toExtract == testExtract) {
-                        shouldBeLit = true;
-                        pBlockEntity.energyStorage.secureExtractEnergy(toExtract, false);
-                        for (int i = 1; i < pBlockEntity.getMultiplier(); i++) {
-                            ticker.tick(pLevel, pPos.above(), above.getBlockState(), above);
-                        }
+                if (toExtract == testExtract) {
+                    shouldBeLit = true;
+                    pBlockEntity.energyStorage.secureExtractEnergy(toExtract, false);
+                    for (int i = 1; i < pBlockEntity.getMultiplier(); i++) {
+                        ticker.tick(pLevel, pPos.above(), above.getBlockState(), above);
                     }
                 }
             }
