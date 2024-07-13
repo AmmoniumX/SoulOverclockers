@@ -2,6 +2,7 @@ package com.ammonium.souloverclockers.block.entity;
 
 import com.ammonium.souloverclockers.SoulOverclockers;
 import com.ammonium.souloverclockers.block.OverclockerBlock;
+import com.ammonium.souloverclockers.block.entity.resolver.MasterBlockEntityResolver;
 import com.ammonium.souloverclockers.network.CapabilitySyncPacket;
 import com.ammonium.souloverclockers.setup.Config;
 import com.ammonium.souloverclockers.setup.Messages;
@@ -226,7 +227,14 @@ public class OverclockerEntity extends BlockEntity implements IEnergyStorage {
 
             // Check if block above is block entity or overclocker
             BlockEntity above = pLevel.getBlockEntity(pPos.above());
+
             if (above == null) return;
+
+            BlockEntity masterBe = MasterBlockEntityResolver.resolveMasterBlockEntity(above);
+            if (masterBe != null) {
+                above = masterBe;
+            }
+
             BlockState aboveBlockState = above.getBlockState();
 //            aboveBlockState.getTags().anyMatch()
             BlockEntityTicker<BlockEntity> ticker = aboveBlockState.getTicker(pLevel, (BlockEntityType<BlockEntity>) above.getType());
