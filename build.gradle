@@ -205,6 +205,8 @@ dependencies {
 
     // Add cursemaven mods
     implementation fg.deobf("curse.maven:jade-324717:${jade_id}")
+    compileOnly "blusunrize.immersiveengineering:ImmersiveEngineering:${immersiveengineering_version}"
+
 }
 
 // Example for how to get properties into the manifest for reading at runtime.

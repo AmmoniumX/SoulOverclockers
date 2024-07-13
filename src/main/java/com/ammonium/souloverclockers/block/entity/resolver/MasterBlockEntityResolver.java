@@ -16,6 +16,7 @@ public abstract class MasterBlockEntityResolver {
         if (resolvers == null) {
             resolvers = new ArrayList<>();
 
+            registerCompat("immersiveengineering", "com.ammonium.souloverclockers.block.entity.resolver.IEMasterBlockEntityResolver");
             // Add more compat in future.
         }
     }
