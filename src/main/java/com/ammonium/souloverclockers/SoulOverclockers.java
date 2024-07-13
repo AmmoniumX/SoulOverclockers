@@ -2,6 +2,7 @@ package com.ammonium.souloverclockers;
 
 import com.ammonium.souloverclockers.block.OverclockerBlock;
 import com.ammonium.souloverclockers.block.entity.OverclockerEntity;
+import com.ammonium.souloverclockers.block.entity.resolver.MasterBlockEntityResolver;
 import com.ammonium.souloverclockers.item.*;
 import com.ammonium.souloverclockers.network.CapabilitySyncPacket;
 import com.ammonium.souloverclockers.recipe.NBTCraftingRecipe;
@@ -116,6 +117,8 @@ public class SoulOverclockers {
 
         // Register ourselves for server and other game events we are interested in
         MinecraftForge.EVENT_BUS.register(this);
+
+        MasterBlockEntityResolver.registerResolvers();
     }
 
     private void commonSetup(final FMLCommonSetupEvent event)
