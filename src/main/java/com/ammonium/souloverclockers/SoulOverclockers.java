@@ -109,6 +109,7 @@ public class SoulOverclockers {
         // Register the commonSetup method for modloading
         modEventBus.addListener(this::commonSetup);
         Config.register();
+
         // Register deferred registers
         BLOCK_ENTITIES.register(modEventBus);
         BLOCKS.register(modEventBus);
@@ -121,25 +122,19 @@ public class SoulOverclockers {
         MasterBlockEntityResolver.registerResolvers();
     }
 
-    private void commonSetup(final FMLCommonSetupEvent event)
-    {
+    private void commonSetup(final FMLCommonSetupEvent event) {
         // Some common setup code
-//        LOGGER.info("HELLO FROM COMMON SETUP");
         Messages.register();
     }
 
-    // You can use SubscribeEvent and let the Event Bus discover methods to call
-    @SubscribeEvent
-    public void onServerStarting(ServerStartingEvent event)
-    {
-        // Do something when the server starts
-//        LOGGER.info("HELLO from server starting");
-    }
-
-    // You can use EventBusSubscriber to automatically register all static methods in the class annotated with @SubscribeEvent
     @Mod.EventBusSubscriber(modid = MODID, bus = Mod.EventBusSubscriber.Bus.FORGE)
     public static class ForgeEvents
     {
+        @SubscribeEvent
+        public void onServerStarting(ServerStartingEvent event) {
+            // Do something when the server starts
+        }
+
         @SubscribeEvent
         public static void onPlayerLogin(PlayerEvent.PlayerLoggedInEvent event){
             SoulOverclockers.LOGGER.debug("(PlayerLoggedInEvent) Refreshing soul power");

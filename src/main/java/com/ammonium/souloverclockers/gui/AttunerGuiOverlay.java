@@ -22,16 +22,15 @@ public class AttunerGuiOverlay {
     @SubscribeEvent
     public static void onRenderGuiOverlay(RenderGuiOverlayEvent.Post event) {
         NamedGuiOverlay overlay = event.getOverlay();
-        // Example: Check if we're rendering the hotbar overlay
         if (overlay.id().equals(VanillaGuiOverlay.HOTBAR.id())) {
             Minecraft mc = Minecraft.getInstance();
             if (mc.player == null) return;
 
             ItemStack mainHand = mc.player.getMainHandItem();
             ItemStack offHand = mc.player.getOffhandItem();
-            // Check if the main hand item is the item you are interested in
-            if (mainHand.is(SoulOverclockers.ATTUNER.get()) || offHand.is(SoulOverclockers.ATTUNER.get())) { // Replace YourMod.YOUR_ITEM with your specific item
-                displaySoulPower(event.getPoseStack()); // Replace "Your Text Here" with your desired text
+
+            if (mainHand.is(SoulOverclockers.ATTUNER.get()) || offHand.is(SoulOverclockers.ATTUNER.get())) {
+                displaySoulPower(event.getPoseStack());
             }
         }
     }
