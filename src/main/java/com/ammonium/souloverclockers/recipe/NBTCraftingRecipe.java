@@ -19,6 +19,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Objects;
+
 public class NBTCraftingRecipe extends ShapedRecipe {
     public NBTCraftingRecipe(ResourceLocation id, String group, int recipeWidth, int recipeHeight, NonNullList<Ingredient> ingredients, ItemStack result) {
         super(id, group, recipeWidth, recipeHeight, ingredients, result);
@@ -26,9 +28,7 @@ public class NBTCraftingRecipe extends ShapedRecipe {
 
     @Override
     public ItemStack assemble(@NotNull CraftingContainer inv) {
-        ItemStack result = super.assemble(inv);
-        result.getOrCreateTag().putInt("SoulPower", 16);
-        return result;
+        return super.assemble(inv);
     }
 
     @Override
@@ -68,14 +68,32 @@ public class NBTCraftingRecipe extends ShapedRecipe {
         @Override
         public NBTCraftingRecipe fromNetwork(ResourceLocation recipeId, FriendlyByteBuf buffer) {
             ShapedRecipe recipe = RecipeSerializer.SHAPED_RECIPE.fromNetwork(recipeId, buffer);
-            // NBT is not typically sent over network for recipes; handle if needed
-            return new NBTCraftingRecipe(recipe.getId(), recipe.getGroup(), recipe.getRecipeWidth(), recipe.getRecipeHeight(), recipe.getIngredients(), recipe.getResultItem());
+            // Read whether there is NBT data
+            boolean hasNbt = buffer.readBoolean();
+            ItemStack output = Objects.requireNonNull(recipe).getResultItem();
+            if (hasNbt) {
+                // Read the NBT data from the buffer
+                CompoundTag nbt = buffer.readNbt();
+                if (nbt != null) {
+                    output.setTag(nbt);
+                }
+            }
+            return new NBTCraftingRecipe(recipe.getId(), recipe.getGroup(),
+                    recipe.getRecipeWidth(), recipe.getRecipeHeight(),
+                    recipe.getIngredients(), output);
         }
 
         @Override
         public void toNetwork(FriendlyByteBuf buffer, NBTCraftingRecipe recipe) {
             RecipeSerializer.SHAPED_RECIPE.toNetwork(buffer, recipe);
-            // NBT is not typically sent over network for recipes; handle if needed
+            ItemStack result = recipe.getResultItem();
+            CompoundTag nbt = result.getTag();
+            // Write whether there is NBT data
+            buffer.writeBoolean(nbt != null);
+            if (nbt != null) {
+                // Write the NBT data to the buffer
+                buffer.writeNbt(nbt);
+            }
         }
     }
 }
