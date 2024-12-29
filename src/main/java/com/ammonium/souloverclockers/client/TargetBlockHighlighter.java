@@ -42,7 +42,7 @@ public class TargetBlockHighlighter {
                     return;
                 }
                 // Render the block outline
-                SoulOverclockers.LOGGER.debug("Rendering block outline at {}", targetBlockPos);
+//                SoulOverclockers.LOGGER.debug("Rendering block outline at {}", targetBlockPos);
                 PoseStack poseStack = event.getPoseStack();
                 Vec3 cameraPos = event.getCamera().getPosition();
                 MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
