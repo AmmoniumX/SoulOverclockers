@@ -10,7 +10,7 @@ import java.awt.*;
 
 public class RenderHelper {
 
-    // Code modified from github:McJtyMods/McJtyLib
+    // Slightly modified code, original code from: mcjty.lib.client.RenderHelper.renderHighLightedBlocksOutline
     public static void renderHighLightedBlockOutline(PoseStack poseStack, VertexConsumer buffer, BlockPos blockPos, Vec3 cameraPos, Color color) {
 
         float mx = (float) (blockPos.getX() - cameraPos.x);
