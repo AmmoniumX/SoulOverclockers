@@ -11,18 +11,14 @@ import com.ammonium.souloverclockers.soulpower.SoulPowerProvider;
 import com.ammonium.souloverclockers.tag.BlockTags;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.Packet;
 import net.minecraft.network.protocol.game.ClientGamePacketListener;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -30,7 +26,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.energy.EnergyStorage;
 import net.minecraftforge.energy.IEnergyStorage;
 import org.jetbrains.annotations.NotNull;
 
@@ -48,6 +43,7 @@ public class OverclockerEntity extends BlockEntity implements IEnergyStorage {
     private int tickCounter = 0;
     private UUID ownerUUID;
     private String ownerName;
+    private @Nullable BlockPos targetPos = null;
     private final InsertOnlyEnergyStorage energyStorage = new InsertOnlyEnergyStorage(Config.OVERCLOCKER_FE_CAPACITY.get(), Config.OVERCLOCKER_FE_TRANSFER.get());
     private final LazyOptional<IEnergyStorage> energy = LazyOptional.of(() -> energyStorage);
     public OverclockerEntity(BlockPos pPos, BlockState pBlockState) {
@@ -68,6 +64,17 @@ public class OverclockerEntity extends BlockEntity implements IEnergyStorage {
     @Nullable
     public String getOwnerName() {
         return ownerName;
+    }
+
+    public void setTargetPos(@Nullable BlockPos targetPos) {
+        this.targetPos = targetPos;
+        this.setChanged();
+        this.sendUpdates();
+    }
+
+    @Nullable
+    public BlockPos getTargetPos() {
+        return targetPos;
     }
 
     // Energy Storage methods
@@ -225,24 +232,27 @@ public class OverclockerEntity extends BlockEntity implements IEnergyStorage {
             // Check if powered by any block besides top block
             int maxSignal = getMaxSignalExcludingTop(pLevel, pPos);
 
-            // Check if block above is block entity or overclocker
-            BlockEntity above = pLevel.getBlockEntity(pPos.above());
-
-            if (above == null) return;
-
-            BlockEntity masterBe = MasterBlockEntityResolver.resolveMasterBlockEntity(above);
-            if (masterBe != null) {
-                above = masterBe;
+            // Search for target block entity, either directly on top or through master block entity
+            BlockEntity target = pLevel.getBlockEntity(pPos.above());
+            if (target == null) {
+                BlockEntity masterBe = MasterBlockEntityResolver.resolveMasterBlockEntity(target);
+                if (masterBe != null) {
+                    target = masterBe;
+                }
             }
 
-            BlockState aboveBlockState = above.getBlockState();
-//            aboveBlockState.getTags().anyMatch()
-            BlockEntityTicker<BlockEntity> ticker = aboveBlockState.getTicker(pLevel, (BlockEntityType<BlockEntity>) above.getType());
+            pBlockEntity.setTargetPos(target != null ? target.getBlockPos() : null);
+            if (target == null) return;
+
+
+            BlockState targetBlockState = target.getBlockState();
+//            targetBlockState.getTags().anyMatch()
+            BlockEntityTicker<BlockEntity> ticker = targetBlockState.getTicker(pLevel, (BlockEntityType<BlockEntity>) target.getType());
 
             // Check if satisfies all rules for running
             boolean canRun = !(Config.REQUIRE_ONLINE.get() && pBlockEntity.getPlayerOwner() == null) &&
-                    pBlockEntity.getMultiplier() != 0 && maxSignal == 0 && !(above instanceof OverclockerEntity) &&
-                    ticker != null && !(aboveBlockState.is(BlockTags.CANT_ACCELERATE) && !(aboveBlockState.is(BlockTags.CANT_OVERCLOCK)));
+                    pBlockEntity.getMultiplier() != 0 && maxSignal == 0 && !(target instanceof OverclockerEntity) &&
+                    ticker != null && !(targetBlockState.is(BlockTags.CANT_ACCELERATE) && !(targetBlockState.is(BlockTags.CANT_OVERCLOCK)));
 
             if (canRun) {
                 // Check if tickable
@@ -255,7 +265,7 @@ public class OverclockerEntity extends BlockEntity implements IEnergyStorage {
                     shouldBeLit = true;
                     pBlockEntity.energyStorage.secureExtractEnergy(toExtract, false);
                     for (int i = 1; i < pBlockEntity.getMultiplier(); i++) {
-                        ticker.tick(pLevel, pPos.above(), above.getBlockState(), above);
+                        ticker.tick(pLevel, pPos.above(), target.getBlockState(), target);
                     }
                 }
             }
@@ -322,6 +332,12 @@ public class OverclockerEntity extends BlockEntity implements IEnergyStorage {
             tag.putUUID("ownerUUID", ownerUUID);
             tag.putString("ownerName", ownerName);
         }
+        tag.putBoolean("hasTarget", targetPos != null);
+        if (targetPos != null) {
+            tag.putInt("targetX", targetPos.getX());
+            tag.putInt("targetY", targetPos.getY());
+            tag.putInt("targetZ", targetPos.getZ());
+        }
         return tag;
     }
     @Override
@@ -332,6 +348,13 @@ public class OverclockerEntity extends BlockEntity implements IEnergyStorage {
         if (tag.contains("ownerUUID") && tag.contains("ownerName")) {
             ownerUUID = tag.getUUID("ownerUUID");
             ownerName = tag.getString("ownerName");
+        }
+        if (tag.contains("hasTarget")) {
+            if (tag.getBoolean("hasTarget")) {
+                targetPos = new BlockPos(tag.getInt("targetX"), tag.getInt("targetY"), tag.getInt("targetZ"));
+            } else {
+                targetPos = null;
+            }
         }
     }
 
@@ -344,6 +367,12 @@ public class OverclockerEntity extends BlockEntity implements IEnergyStorage {
             tag.putUUID("ownerUUID", ownerUUID);
             tag.putString("ownerName", ownerName);
         }
+        tag.putBoolean("hasTarget", targetPos != null);
+        if (targetPos != null) {
+            tag.putInt("targetX", targetPos.getX());
+            tag.putInt("targetY", targetPos.getY());
+            tag.putInt("targetZ", targetPos.getZ());
+        }
     }
     @Override
     public void load(@NotNull CompoundTag tag) {
@@ -353,6 +382,13 @@ public class OverclockerEntity extends BlockEntity implements IEnergyStorage {
         if (tag.contains("ownerUUID") && tag.contains("ownerName")) {
             ownerUUID = tag.getUUID("ownerUUID");
             ownerName = tag.getString("ownerName");
+        }
+        if (tag.contains("hasTarget")) {
+            if (tag.getBoolean("hasTarget")) {
+                targetPos = new BlockPos(tag.getInt("targetX"), tag.getInt("targetY"), tag.getInt("targetZ"));
+            } else {
+                targetPos = null;
+            }
         }
     }
     @Override

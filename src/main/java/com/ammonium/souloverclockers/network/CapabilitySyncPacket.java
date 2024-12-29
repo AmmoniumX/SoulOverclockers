@@ -1,12 +1,11 @@
 package com.ammonium.souloverclockers.network;
 
-import com.ammonium.souloverclockers.SoulOverclockers;
 import com.ammonium.souloverclockers.soulpower.ClientCapabilityData;
-import com.ammonium.souloverclockers.soulpower.SoulPowerProvider;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.entity.player.Player;
 import net.minecraftforge.network.NetworkEvent;
+
 import java.util.UUID;
 import java.util.function.Supplier;
 
@@ -39,7 +38,6 @@ public class CapabilitySyncPacket {
                 if (mc.level != null) {
                     Player player = mc.level.getPlayerByUUID(message.playerUUID);
                     if (player != null) {
-                        // Assuming you have a method to update the client-side capability data
 //                        SoulOverclockers.LOGGER.debug("Syncing capability to player...");
                         ClientCapabilityData.updateCapabilityData(message.used, message.capacity);
                     }
