@@ -143,7 +143,7 @@ public class OverclockerEntity extends BlockEntity implements IEnergyStorage {
         if (this.level == null || this.level.isClientSide) return -1; // Only access from server side
         int newMult = Math.max(multiplier-2, 0);
         if (newMult != multiplier) {
-            AtomicBoolean success = new AtomicBoolean(false);
+//            AtomicBoolean success = new AtomicBoolean(false);
             Player player = getPlayerOwner();
             if (player == null) return -1;
 
@@ -234,16 +234,11 @@ public class OverclockerEntity extends BlockEntity implements IEnergyStorage {
 
             // Search for target block entity, either directly on top or through master block entity
             BlockEntity target = pLevel.getBlockEntity(pPos.above());
-            if (target == null) {
-                BlockEntity masterBe = MasterBlockEntityResolver.resolveMasterBlockEntity(target);
-                if (masterBe != null) {
-                    target = masterBe;
-                }
-            }
+            BlockEntity masterTarget = MasterBlockEntityResolver.resolveMasterBlockEntity(target);
+            target = masterTarget != null ? masterTarget : target;
 
             pBlockEntity.setTargetPos(target != null ? target.getBlockPos() : null);
             if (target == null) return;
-
 
             BlockState targetBlockState = target.getBlockState();
 //            targetBlockState.getTags().anyMatch()
